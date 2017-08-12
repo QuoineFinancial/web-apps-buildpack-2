@@ -38,7 +38,7 @@ yarn install --modules-folder ../node_modules &> /dev/null || {
 }
 
 echo "       [2/2] apps..."
-apps=(accounts balance trade)
+apps=(accounts home invest lend trade)
 length=${#apps[@]}
 for i in ${!apps[@]}; do
   iapp=${apps[$i]}
