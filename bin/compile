@@ -17,22 +17,10 @@ ENV_DIR="$3"
 
 
 # ===
-echo "       "
-echo "-----> Restore node_modules"
-cd ${BUILD_DIR}
-rm -rf node_modules
-echo "       remove node_modules"
-mv src node_modules
-echo "       rename src to node_modules"
-echo "       "
-
-
-
-# ===
 echo "-----> Install dependencies for core and all apps"
 
 echo "       [1/2] core..."
-cd node_modules/core
+cd core
 yarn install --modules-folder ../node_modules &> /dev/null || {
   exit 1
 }
@@ -89,6 +77,6 @@ yarn run build &> /dev/null || {
   exit 1
 }
 echo "       move static.json to root"
-mv static.json ../../.
+mv static.json ../.
 echo "       Done."
 echo "       "
