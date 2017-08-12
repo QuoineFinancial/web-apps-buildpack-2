@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+echo "       "
+
+BUILD_DIR="$1"
+CACHE_DIR="$2"
+ENV_DIR="$3"
+TMP_DIR="$(mktemp -d)"
+
+
+
+# ===
+echo "-----> Restore node_modules"
+cd ${BUILD_DIR}
+rm -rf node_modules
+echo "       remove node_modules"
+mv src node_modules
+echo "       rename src to node_modules"
+echo "       "
+
+
+
+# ===
+echo "-----> Install dependencies for core and all apps"
+
+echo "       [1/2] core..."
+cd node_modules/core
+yarn install --modules-folder ../node_modules &> /dev/null || {
+  exit 1
+}
+
+echo "       [2/2] apps..."
+apps=(accounts balance trade)
+length=${#apps[@]}
+for i in ${!apps[@]}; do
+  iapp=${apps[$i]}
+  ii=$((i + 1))
+  echo "             [${ii}/${length}] ${iapp}..."
+  cd ../${iapp}
+  yarn install &> /dev/null || {
+    echo "       Failed."
+    exit 1
+  }
+done
+echo "       Done."
+echo "       "
+
+
+
+# ===
+echo "-----> Export ENV for compiling"
+export_env_dir() {
+  env_dir=$1
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}
+# Support env vars during build:
+# * `REACT_APP_*`
+#   * https://github.com/facebookincubator/create-react-app/blob/v0.2.3/template/README.md#adding-custom-environment-variables
+# * `NODE_*`, especially for `NODE_PATH`
+#   * https://github.com/facebookincubator/create-react-app/pull/476
+export_env_dir "$ENV_DIR" '^(REACT_APP_|NODE_)'
+echo "       "
+
+
+# ===
+echo "-----> Build target app"
+APP="$(cat "${ENV_DIR}/REACT_APP_APP")"
+echo "       app: ${APP}"
+echo "       move static.json to root"
+cd ../${APP}
+yarn run build
+mv static.json ../../.
+
+
