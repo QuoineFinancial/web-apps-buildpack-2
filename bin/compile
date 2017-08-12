@@ -16,6 +16,10 @@ ENV_DIR="$3"
 
 
 
+cd ${BUILD_DIR}
+
+
+
 # ===
 echo "-----> Install dependencies for core and all apps"
 
