@@ -78,5 +78,8 @@ echo "       move static.json to root"
 cd ../${APP}
 yarn run build
 mv static.json ../../.
-
+echo "test 1"
+ls .
+echo "test 2"
+ls ./build
 
