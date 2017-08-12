@@ -74,12 +74,13 @@ echo "       "
 echo "-----> Build target app"
 APP="$(cat "${ENV_DIR}/REACT_APP_APP")"
 echo "       app: ${APP}"
-echo "       move static.json to root"
+echo "       build app with yarn run build"
 cd ../${APP}
-yarn run build
+yarn run build &> /dev/null || {
+  echo "       Failed."
+  exit 1
+}
+echo "       move static.json to root"
 mv static.json ../../.
-echo "test 1"
-ls .
-echo "test 2"
-ls ./build
-
+echo "       Done."
+echo "       "
