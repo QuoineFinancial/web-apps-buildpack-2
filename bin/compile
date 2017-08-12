@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
 
-echo "       "
+# Fail immediately on non-zero exit code.
+set -e
+# Fail immediately on non-zero exit code within a pipeline.
+set -o pipefail
+# Fail on undeclared variables.
+set -u
+# Debug, echo every command
+#set -x
 
 BUILD_DIR="$1"
 CACHE_DIR="$2"
 ENV_DIR="$3"
-TMP_DIR="$(mktemp -d)"
 
 
 
 # ===
+echo "       "
 echo "-----> Restore node_modules"
 cd ${BUILD_DIR}
 rm -rf node_modules
