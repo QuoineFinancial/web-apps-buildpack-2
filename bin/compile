@@ -10,32 +10,33 @@ set -u
 # Debug, echo every command
 #set -x
 
-BUILD_DIR="$1"
+export BUILD_DIR="$1" # for some JS script to read
 CACHE_DIR="$2"
 ENV_DIR="$3"
-
-
+BUILDPACK_DIR="$(dirname $(dirname $0))" # for running the JS script
 
 cd ${BUILD_DIR}
 
+# ========================
+# ========================
+# ========================
 
-
-# ===
-echo "-----> Install dependencies for core and all apps"
-
-echo "       [1/2] core..."
-cd core
-yarn install --modules-folder ../node_modules &> /dev/null || {
+echo "       "
+echo "1/6--> Installing dependencies"
+echo "       [1/2] root..."
+yarn install &> /dev/null || {
+  echo "       Failed."
   exit 1
 }
-
 echo "       [2/2] apps..."
-apps=(accounts chart home invest lend trade balance)
+apps=(core accounts home invest lend trade balance chart)
 length=${#apps[@]}
+# cd to core intentionally so the loop will be the same for all apps
+cd core
 for i in ${!apps[@]}; do
   iapp=${apps[$i]}
   ii=$((i + 1))
-  echo "             [${ii}/${length}] ${iapp}..."
+  echo "       - [${ii}/${length}] ${iapp}..."
   cd ../${iapp}
   yarn install &> /dev/null || {
     echo "       Failed."
@@ -43,12 +44,18 @@ for i in ${!apps[@]}; do
   }
 done
 echo "       Done."
+
+# ========================
+# ========================
+# ========================
+
 echo "       "
-
-
-
-# ===
-echo "-----> Export ENV for compiling"
+echo "2/6--> Exporting ENV for building"
+# Support env vars during build:
+# * `REACT_APP_*`
+#   * https://github.com/facebookincubator/create-react-app/blob/v0.2.3/template/README.md#adding-custom-environment-variables
+# * `NODE_*`, especially for `NODE_PATH`
+#   * https://github.com/facebookincubator/create-react-app/pull/476
 export_env_dir() {
   env_dir=$1
   whitelist_regex=${2:-''}
@@ -61,26 +68,64 @@ export_env_dir() {
     done
   fi
 }
-# Support env vars during build:
-# * `REACT_APP_*`
-#   * https://github.com/facebookincubator/create-react-app/blob/v0.2.3/template/README.md#adding-custom-environment-variables
-# * `NODE_*`, especially for `NODE_PATH`
-#   * https://github.com/facebookincubator/create-react-app/pull/476
-export_env_dir "$ENV_DIR" '^(REACT_APP_|NODE_)'
+export_env_dir "$ENV_DIR" '^(REACT_APP_|NODE_|AWS_)'
+echo "       Done."
+
+# ========================
+# ========================
+# ========================
+
 echo "       "
+echo "3/6--> Building all apps"
+mkdir ${BUILD_DIR}/dist
+apps=(accounts trade balance chart)
+length=${#apps[@]}
+for i in ${!apps[@]}; do
+  iapp=${apps[$i]}
+  ii=$((i + 1))
+  cd ${BUILD_DIR}/${iapp}
+  export "REACT_APP_APP=${iapp}" # The build needs it
+  echo "       [${ii}/${length}] ${REACT_APP_APP}..."
+  yarn run build &> /dev/null || {
+    echo "       Failed."
+    exit 1
+  }
+  mkdir ${BUILD_DIR}/dist/${iapp}
+  cp -R ${BUILD_DIR}/${iapp}/build/. ${BUILD_DIR}/dist/${iapp}
+done
+echo "       Done."
 
+# ========================
+# ========================
+# ========================
 
-# ===
-echo "-----> Build target app"
-APP="$(cat "${ENV_DIR}/REACT_APP_APP")"
-echo "       app: ${APP}"
-echo "       build app with yarn run build"
-cd ../${APP}
-yarn run build &> /dev/null || {
+echo "       "
+echo "4/6--> Installing awscli"
+wget https://s3.amazonaws.com/aws-cli/awscli-bundle.zip --quiet
+unzip -qq awscli-bundle.zip
+./awscli-bundle/install -b ${BUILD_DIR}/bin/aws &> /dev/null || {
   echo "       Failed."
   exit 1
 }
-echo "       move static.json to root"
-mv static.json ../.
 echo "       Done."
+
+# ========================
+# ========================
+# ========================
+
 echo "       "
+echo "5/6--> Syncing to S3 ${AWS_S3_BUCKET}"
+echo "       - Syncing different-sized files..."
+${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors
+echo "       - Force syncing */index.html files..."
+${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --exclude "*" --include "*/index.html" --only-show-errors
+echo "       Done."
+
+# ========================
+# ========================
+# ========================
+echo "       "
+echo "6/6--> Creating CloudFront invalidations"
+${BUILD_DIR}/bin/aws configure set preview.cloudfront true
+node ${BUILDPACK_DIR}/bin/cloudfront.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
+echo "       Done."
