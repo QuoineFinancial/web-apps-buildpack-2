@@ -10,6 +10,8 @@ set -u
 # Debug, echo every command
 #set -x
 
+COMPILE_START_TIME=$(date +%s)
+
 export BUILD_DIR="$1" # for some JS script to read
 CACHE_DIR="$2"
 ENV_DIR="$3"
@@ -21,6 +23,7 @@ cd ${BUILD_DIR}
 # ========================
 # ========================
 
+START_TIME=$(date +%s)
 echo "       "
 echo "1/6--> Installing dependencies"
 echo "       [1/2] root..."
@@ -43,7 +46,8 @@ for i in ${!apps[@]}; do
     exit 1
   }
 done
-echo "       Done."
+END_TIME=$(date +%s)
+echo "       Done in $((END_TIME - START_TIME)) seconds."
 
 # ========================
 # ========================
@@ -75,6 +79,7 @@ echo "       Done."
 # ========================
 # ========================
 
+START_TIME=$(date +%s)
 echo "       "
 echo "3/6--> Building all apps"
 mkdir ${BUILD_DIR}/dist
@@ -93,7 +98,8 @@ for i in ${!apps[@]}; do
   mkdir ${BUILD_DIR}/dist/${iapp}
   cp -R ${BUILD_DIR}/${iapp}/build/. ${BUILD_DIR}/dist/${iapp}
 done
-echo "       Done."
+END_TIME=$(date +%s)
+echo "       Done in $((END_TIME - START_TIME)) seconds."
 
 # ========================
 # ========================
@@ -129,3 +135,9 @@ echo "6/6--> Creating CloudFront invalidations"
 ${BUILD_DIR}/bin/aws configure set preview.cloudfront true
 node ${BUILDPACK_DIR}/bin/cloudfront.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
 echo "       Done."
+
+COMPILE_END_TIME=$(date +%s)
+echo "       "
+echo "-----> Buildpack done in $((COMPILE_END_TIME - COMPILE_START_TIME)) seconds."
+echo "       "
+
