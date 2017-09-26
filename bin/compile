@@ -17,8 +17,6 @@ CACHE_DIR="$2"
 ENV_DIR="$3"
 BUILDPACK_DIR="$(dirname $(dirname $0))" # for running the JS script
 
-cd ${BUILD_DIR}
-
 # ========================
 # ========================
 # ========================
@@ -26,26 +24,31 @@ cd ${BUILD_DIR}
 START_TIME=$(date +%s)
 echo "       "
 echo "1/6--> Installing dependencies"
+
+START_TIME=$(date +%s)
+yarn config set cache-folder ${CACHE_DIR} &> /dev/null
+
 echo "       [1/2] root..."
 yarn install &> /dev/null || {
   echo "       Failed."
   exit 1
 }
+
 echo "       [2/2] apps..."
 apps=(core accounts home invest lend trade balance chart)
 length=${#apps[@]}
-# cd to core intentionally so the loop will be the same for all apps
-cd core
+
 for i in ${!apps[@]}; do
   iapp=${apps[$i]}
   ii=$((i + 1))
   echo "       - [${ii}/${length}] ${iapp}..."
-  cd ../${iapp}
+  cd ${BUILD_DIR}/${iapp}
   yarn install &> /dev/null || {
     echo "       Failed."
     exit 1
   }
 done
+
 END_TIME=$(date +%s)
 echo "       Done in $((END_TIME - START_TIME)) seconds."
 
@@ -82,22 +85,7 @@ echo "       Done."
 START_TIME=$(date +%s)
 echo "       "
 echo "3/6--> Building all apps"
-mkdir ${BUILD_DIR}/dist
-apps=(accounts trade balance chart)
-length=${#apps[@]}
-for i in ${!apps[@]}; do
-  iapp=${apps[$i]}
-  ii=$((i + 1))
-  cd ${BUILD_DIR}/${iapp}
-  export "REACT_APP_APP=${iapp}" # The build needs it
-  echo "       [${ii}/${length}] ${REACT_APP_APP}..."
-  yarn run build &> /dev/null || {
-    echo "       Failed."
-    exit 1
-  }
-  mkdir ${BUILD_DIR}/dist/${iapp}
-  cp -R ${BUILD_DIR}/${iapp}/build/. ${BUILD_DIR}/dist/${iapp}
-done
+node ${BUILDPACK_DIR}/bin/build.js
 END_TIME=$(date +%s)
 echo "       Done in $((END_TIME - START_TIME)) seconds."
 
@@ -133,11 +121,10 @@ echo "       Done."
 echo "       "
 echo "6/6--> Creating CloudFront invalidations"
 ${BUILD_DIR}/bin/aws configure set preview.cloudfront true
-node ${BUILDPACK_DIR}/bin/cloudfront.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
+node ${BUILDPACK_DIR}/bin/invalidate-cloudfront.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
 echo "       Done."
 
 COMPILE_END_TIME=$(date +%s)
 echo "       "
 echo "-----> Buildpack done in $((COMPILE_END_TIME - COMPILE_START_TIME)) seconds."
 echo "       "
-

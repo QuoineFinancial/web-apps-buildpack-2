@@ -7,7 +7,7 @@ const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
 const BUILD_DIR = process.env.BUILD_DIR;
 
 exec(`${BUILD_DIR}/bin/aws cloudfront list-distributions`, {
-  maxBuffer: 10000*1024
+  maxBuffer: 10000 * 1024
 }, (err, stdout, stderr) => {
   if (err) {
     return console.log(stderr);
