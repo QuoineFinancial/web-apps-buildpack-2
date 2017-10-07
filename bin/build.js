@@ -1,5 +1,5 @@
 const { exec, execSync } = require(`child_process`);
-const apps = ['accounts', 'trade', 'balance', 'chart'];
+const apps = ['accounts', 'trade', 'balance', 'chart', 'token'];
 const BUILD_DIR = process.env.BUILD_DIR;
 const MAX_CONCURRENT_BUILD = 3;
 
