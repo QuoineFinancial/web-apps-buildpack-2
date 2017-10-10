@@ -17,8 +17,11 @@ const domain = (bucket, app) => {
   }
 
   // Then fallback to our url template
-  const vendor = bucket.split('-')[0];
-  const env = bucket.split('-')[1];
+  // Note: env might contains "-", so bucket might has multiple "-",
+  // eg: quoinex-v4-uat
+  const separatorIndex = bucket.indexOf('-');
+  const vendor = bucket.slice(0, separatorIndex);
+  const env = bucket.slice(separatorIndex + 1);
   return template(vendor, env, app);
 }
 
