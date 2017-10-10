@@ -35,7 +35,7 @@ yarn install &> /dev/null || {
 }
 
 echo "       [2/2] apps..."
-apps=(core accounts home invest lend trade balance chart tokens)
+apps=(core accounts home invest lend trade chart tokens)
 length=${#apps[@]}
 
 for i in ${!apps[@]}; do
@@ -75,7 +75,7 @@ export_env_dir() {
     done
   fi
 }
-export_env_dir "$ENV_DIR" '^(REACT_APP_|NODE_|AWS_)'
+export_env_dir "$ENV_DIR" '^(REACT_APP_|NODE_|AWS_|CLOUDFLARE_)'
 echo "       Done."
 
 # ========================
@@ -85,7 +85,7 @@ echo "       Done."
 START_TIME=$(date +%s)
 echo "       "
 echo "3/6--> Building all apps"
-node ${BUILDPACK_DIR}/bin/build.js
+node ${BUILDPACK_DIR}/bin/utils/build.js
 END_TIME=$(date +%s)
 echo "       Done in $((END_TIME - START_TIME)) seconds."
 
@@ -121,7 +121,8 @@ echo "       Done."
 echo "       "
 echo "6/6--> Creating CloudFront invalidations"
 ${BUILD_DIR}/bin/aws configure set preview.cloudfront true
-node ${BUILDPACK_DIR}/bin/invalidate-cloudfront.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
+
+node ${BUILDPACK_DIR}/bin/utils/distribute.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
 echo "       Done."
 
 COMPILE_END_TIME=$(date +%s)

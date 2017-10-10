@@ -1,10 +1,10 @@
 const { exec, execSync } = require(`child_process`);
-const apps = ['accounts', 'trade', 'balance', 'chart', 'tokens'];
-const BUILD_DIR = process.env.BUILD_DIR;
-const MAX_CONCURRENT_BUILD = 3;
+const { apps, appUrlKeys } = require('./config');
+const domain = require('./domain');
 
-console.log(`-----> Build all apps with ${MAX_CONCURRENT_BUILD} concurrent build`);
-execSync(`mkdir ${BUILD_DIR}/dist`);
+const BUILD_DIR = process.env.BUILD_DIR;
+const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
+const MAX_CONCURRENT_BUILD = 2;
 
 let concurrentBuild = 0;
 let index = 0;
@@ -30,13 +30,21 @@ const attemp = () => {
   }
 }
 
-const build = (app, callback) => {
-  let envBuild = process.env;
-  envBuild.REACT_APP_APP = app;
+const env = (app) => {
+  let result = process.env;
+  result.REACT_APP_APP = app;
 
+  apps.forEach(app => {
+    result[appUrlKeys[app]] = domain(AWS_S3_BUCKET, app);
+  });
+
+  return result;
+}
+
+const build = (app, callback) => {
   exec(`yarn run build`, {
     cwd: `${BUILD_DIR}/${app}`,
-    env: envBuild
+    env: env(app)
   }, (err, stdout, stderr) => {
     if (err) {
       console.log(`       - Build ${app} failed.`);
@@ -49,4 +57,6 @@ const build = (app, callback) => {
   });
 }
 
+console.log(`-----> Build all apps with ${MAX_CONCURRENT_BUILD} concurrent builds`);
+execSync(`mkdir ${BUILD_DIR}/dist`);
 attemp();
