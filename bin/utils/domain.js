@@ -3,8 +3,8 @@ const { appUrlKeys } = require('./config');
 const template = (vendor, env, app) => {
   switch (env) {
     case 'prod': return `https://${app}.${vendor}.com`;
-    case 'beta': return `https://${app}-beta.${vendor}.com`;
-    case 'sandbox': return `https://${app}-sandbox.${vendor}.com`;
+    case 'beta': return `https://beta-${app}.${vendor}.com`;
+    case 'demo': return `https://demo-${app}.${vendor}.com`;
     default:
       return `https://${vendor}-${env}-${app}.quoine.io`;
   }
