@@ -1,4 +1,4 @@
-// This will invalidate CloudFront based on S3
+// This will do many stuffs based on S3 bucket name
 // The app need to know the AWS_S3_BUCKET
 
 const { exec, execSync } = require('child_process');
@@ -55,7 +55,8 @@ const isInvalid = distribution => {
 
 const getDistributions = s3URL => new Promise((resolve, reject) => {
   const matchedS3Bucket = distribution => {
-    return getOrigin(distribution).DomainName === s3URL;
+    const DomainName = getOrigin(distribution).DomainName;
+    return (DomainName.indexOf(AWS_S3_BUCKET) > -1);
   };
 
   const isEnabled = distribution => (distribution.Enabled === true);
@@ -69,7 +70,7 @@ const getDistributions = s3URL => new Promise((resolve, reject) => {
     const distributions = JSON
       .parse(stdout).DistributionList.Items
       .filter(isEnabled)
-      .filter(matchedS3Bucket)
+      .filter(matchedS3Bucket);
 
     resolve({ s3URL, distributions });
   });
