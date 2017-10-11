@@ -1,4 +1,4 @@
-// This will invalidate CloudFront based on S3
+// This will do many stuffs based on S3 bucket name
 // The app need to know the AWS_S3_BUCKET
 
 const { exec, execSync } = require('child_process');
@@ -16,6 +16,23 @@ const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET;
 const BUILD_DIR = process.env.BUILD_DIR;
 const AWS_CLI = `${BUILD_DIR}/bin/aws`;
 
+const s3Hosting = {
+  'us-east-2': 's3-website.us-east-2.amazonaws.com',
+  'us-east-1': 's3-website-us-east-1.amazonaws.com',
+  'us-west-1': 's3-website-us-west-1.amazonaws.com',
+  'us-west-2': 's3-website-us-west-2.amazonaws.com',
+  'ca-central-1': 's3-website.ca-central-1.amazonaws.com',
+  'ap-south-1': 's3-website.ap-south-1.amazonaws.com',
+  'ap-northeast-2': 's3-website.ap-northeast-2.amazonaws.com',
+  'ap-southeast-1': 's3-website-ap-southeast-1.amazonaws.com',
+  'ap-southeast-2': 's3-website-ap-southeast-2.amazonaws.com',
+  'ap-northeast-1': 's3-website-ap-northeast-1.amazonaws.com',
+  'eu-central-1': 's3-website.eu-central-1.amazonaws.com',
+  'eu-west-1': 's3-website-eu-west-1.amazonaws.com',
+  'eu-west-2': 's3-website.eu-west-2.amazonaws.com',
+  'sa-east-1': 's3-website-sa-east-1.amazonaws.com',
+};
+
 const getS3URL = bucket => new Promise((resolve, reject) => {
   exec(`${AWS_CLI} s3api get-bucket-location --bucket ${bucket}`, (error, stdout, stderr) => {
     if (error) {
@@ -25,7 +42,7 @@ const getS3URL = bucket => new Promise((resolve, reject) => {
 
     const response = JSON.parse(stdout);
     const region = response.LocationConstraint;
-    const url = `${bucket}.s3-website-${region}.amazonaws.com`;
+    const url = s3Hosting[region];
     resolve(url);
   });
 });
@@ -69,7 +86,7 @@ const getDistributions = s3URL => new Promise((resolve, reject) => {
     const distributions = JSON
       .parse(stdout).DistributionList.Items
       .filter(isEnabled)
-      .filter(matchedS3Bucket)
+      .filter(matchedS3Bucket);
 
     resolve({ s3URL, distributions });
   });
