@@ -231,10 +231,10 @@ const updateCloudFlareDNS = (distributions) => {
 
 getS3URL(AWS_S3_BUCKET)
   .then(getDistributions)
-  // .then(validateDistributions)
-  // .then(addMissingDistributions)
-  // .then(invalidateDistributions)
-  // .then(updateCloudFlareDNS)
+  .then(validateDistributions)
+  .then(addMissingDistributions)
+  .then(invalidateDistributions)
+  .then(updateCloudFlareDNS)
   .catch((error) => {
     throw error;
   });
