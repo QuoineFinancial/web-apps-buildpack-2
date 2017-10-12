@@ -42,7 +42,7 @@ const getS3URL = bucket => new Promise((resolve, reject) => {
 
     const response = JSON.parse(stdout);
     const region = response.LocationConstraint;
-    const url = s3Hosting[region];
+    const url = `${bucket}.${s3Hosting[region]}`;
     resolve(url);
   });
 });
@@ -231,10 +231,10 @@ const updateCloudFlareDNS = (distributions) => {
 
 getS3URL(AWS_S3_BUCKET)
   .then(getDistributions)
-  .then(validateDistributions)
-  .then(addMissingDistributions)
-  .then(invalidateDistributions)
-  .then(updateCloudFlareDNS)
+  // .then(validateDistributions)
+  // .then(addMissingDistributions)
+  // .then(invalidateDistributions)
+  // .then(updateCloudFlareDNS)
   .catch((error) => {
     throw error;
   });
