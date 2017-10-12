@@ -185,11 +185,23 @@ const addMissingDistributions = ({ s3URL, distributions }) => new Promise((resol
     cname: domain(AWS_S3_BUCKET, app).replace('https://', '')
   });
 
-  Promise.all(
-    missingApps
-      .map(getCreateConfig)
-      .map(createDistribution)
-  ).then(newDistributions => {
+  newDistributions = [];
+
+  const createMissing = index => new Promise(resolve => {
+    if (index === missingApps.length) {
+      return resolve(newDistributions);
+    }
+    const app = missingApps[index];
+    const config = getCreateConfig(app);
+    return createDistribution(config).then(
+      distribution => {
+        newDistributions.push(distribution);
+        createMissing(index + 1).then(resolve);
+      }
+    );
+  });
+
+  createMissing(0).then(newDistributions => {
     resolve(distributions.concat(newDistributions));
   });
 
