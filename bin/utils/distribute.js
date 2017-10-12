@@ -42,7 +42,7 @@ const getS3URL = bucket => new Promise((resolve, reject) => {
 
     const response = JSON.parse(stdout);
     const region = response.LocationConstraint;
-    const url = s3Hosting[region];
+    const url = `${bucket}.${s3Hosting[region]}`;
     resolve(url);
   });
 });
