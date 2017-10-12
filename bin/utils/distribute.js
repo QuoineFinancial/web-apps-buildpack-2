@@ -17,6 +17,7 @@ const BUILD_DIR = process.env.BUILD_DIR;
 const AWS_CLI = `${BUILD_DIR}/bin/aws`;
 
 const s3Hosting = {
+  'us-east-1': 's3-website-us-east-1.amazonaws.com',
   'us-east-2': 's3-website.us-east-2.amazonaws.com',
   'us-east-1': 's3-website-us-east-1.amazonaws.com',
   'us-west-1': 's3-website-us-west-1.amazonaws.com',
