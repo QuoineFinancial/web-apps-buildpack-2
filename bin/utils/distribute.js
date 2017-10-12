@@ -42,10 +42,12 @@ const getS3URL = bucket => new Promise((resolve, reject) => {
     }
 
     const response = JSON.parse(stdout);
-    const region = response.LocationConstraint || 'us-east1';
-    //According to the service documentation, S3 returns a null location if the bucket is in the US East (N. Virginia) region.
-
+    const region = response.LocationConstraint || 'us-east-1';
     const url = `${bucket}.${s3Hosting[region]}`;
+
+    console.log();
+    console.log(ARROW_PREFIX, `Origin: ${url}`);
+
     resolve(url);
   });
 });
@@ -101,7 +103,6 @@ const updateDistribution = distribution => new Promise((resolve, reject) => {
   console.log(LOG_PREFIX, `- Distribution ${distribution.Id} for ${appDomain} need to update.`);
 
   const updateCommand = (ETag, configFile) => {
-    // console.log(`${AWS_CLI} cloudfront update-distribution --id ${distribution.Id} --distribution-config file://${configFile} --if-match ${ETag}`);
     exec(`${AWS_CLI} cloudfront update-distribution --id ${distribution.Id} --distribution-config file://${configFile} --if-match ${ETag}`,
       (error, stdout, stderr) => {
         if (error) {
