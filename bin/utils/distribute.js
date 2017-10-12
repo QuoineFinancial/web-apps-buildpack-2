@@ -189,14 +189,14 @@ const addMissingDistributions = ({ s3URL, distributions }) => new Promise((resol
 
   const createMissing = index => new Promise(resolve => {
     if (index === missingApps.length) {
-      resolve(newDistributions);
+      return resolve(newDistributions);
     }
     const app = missingApps[index];
     const config = getCreateConfig(app);
-    return createDistribution(app).then(
+    return createDistribution(config).then(
       distribution => {
         newDistributions.push(distribution);
-        createMissing(index + 1);
+        createMissing(index + 1).then(resolve);
       }
     );
   });
