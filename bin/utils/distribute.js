@@ -41,7 +41,9 @@ const getS3URL = bucket => new Promise((resolve, reject) => {
     }
 
     const response = JSON.parse(stdout);
-    const region = response.LocationConstraint;
+    const region = response.LocationConstraint || 'us-east1';
+    //According to the service documentation, S3 returns a null location if the bucket is in the US East (N. Virginia) region.
+
     const url = `${bucket}.${s3Hosting[region]}`;
     resolve(url);
   });
