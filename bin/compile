@@ -110,7 +110,7 @@ echo "       Done."
 echo "       "
 echo "5/6--> Syncing to S3 ${AWS_S3_BUCKET}"
 echo "       - Syncing different-sized files..."
-${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors
+${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors --exclude "documents"
 echo "       - Force syncing */index.html files..."
 ${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --exclude "*" --include "*/index.html" --only-show-errors
 echo "       Done."
