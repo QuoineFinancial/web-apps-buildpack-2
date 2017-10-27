@@ -23,7 +23,7 @@ BUILDPACK_DIR="$(dirname $(dirname $0))" # for running the JS script
 
 START_TIME=$(date +%s)
 echo "       "
-echo "1/6--> Installing dependencies"
+echo "1/7--> Installing dependencies"
 
 START_TIME=$(date +%s)
 yarn config set cache-folder ${CACHE_DIR} &> /dev/null
@@ -57,7 +57,7 @@ echo "       Done in $((END_TIME - START_TIME)) seconds."
 # ========================
 
 echo "       "
-echo "2/6--> Exporting ENV for building"
+echo "2/7--> Exporting ENV for building"
 # Support env vars during build:
 # * `REACT_APP_*`
 #   * https://github.com/facebookincubator/create-react-app/blob/v0.2.3/template/README.md#adding-custom-environment-variables
@@ -84,7 +84,7 @@ echo "       Done."
 
 START_TIME=$(date +%s)
 echo "       "
-echo "3/6--> Building all apps"
+echo "3/7--> Building all apps"
 node ${BUILDPACK_DIR}/bin/utils/build.js
 END_TIME=$(date +%s)
 echo "       Done in $((END_TIME - START_TIME)) seconds."
@@ -94,7 +94,7 @@ echo "       Done in $((END_TIME - START_TIME)) seconds."
 # ========================
 
 echo "       "
-echo "4/6--> Installing awscli"
+echo "4/7--> Installing awscli"
 wget https://s3.amazonaws.com/aws-cli/awscli-bundle.zip --quiet
 unzip -qq awscli-bundle.zip
 ./awscli-bundle/install -b ${BUILD_DIR}/bin/aws &> /dev/null || {
@@ -110,7 +110,12 @@ echo "       Done."
 echo "       "
 echo "5/6--> Syncing to S3 ${AWS_S3_BUCKET}"
 echo "       - Syncing different-sized files..."
-${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors --exclude "documents"
+
+# Download documents if exists (qryptos-prod now has documents folder)
+${BUILD_DIR}/bin/aws s3 sync s3://${AWS_S3_BUCKET}/documents ${BUILD_DIR}/dist
+
+# Sync
+${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors
 echo "       - Force syncing */index.html files..."
 ${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --exclude "*" --include "*/index.html" --only-show-errors
 echo "       Done."
@@ -118,12 +123,40 @@ echo "       Done."
 # ========================
 # ========================
 # ========================
-echo "       "
-echo "6/6--> Creating CloudFront invalidations"
-${BUILD_DIR}/bin/aws configure set preview.cloudfront true
 
+echo "       "
+echo "6/7--> Creating CloudFront invalidations"
+${BUILD_DIR}/bin/aws configure set preview.cloudfront true
 node ${BUILDPACK_DIR}/bin/utils/distribute.js ${AWS_S3_BUCKET} ${BUILD_DIR} # Auto detect CF distributions to invalidate
 echo "       Done."
+
+# ========================
+# ========================
+# ========================
+
+echo "       "
+echo "7/7--> Updating guides..."
+
+if [ $AWS_S3_BUCKET == "quoinex-beta" ]; then
+  cd ${BUILD_DIR}/_guides
+  echo "       - Installing dependencies..."
+  yarn install &> /dev/null || {
+    echo "       Failed."
+    exit 1
+  }
+  echo "       - Building guides..."
+  node build.js &> /dev/null || {
+    echo "       Failed."
+    exit 1
+  }
+  echo "       - Syncing to S3..."
+  ${BUILD_DIR}/bin/aws s3 sync ./build s3://quoine-guides --delete --size-only --only-show-errors
+  echo "       - Creating invalidation..."
+  ${BUILD_DIR}/bin/aws cloudfront create-invalidation --distribution-id EL07ZPVCXIWA5 --paths "/*"
+  echo "       Done."
+else
+  echo "       - Only available for quoinex-beta due to avoiding redundant build."
+fi
 
 COMPILE_END_TIME=$(date +%s)
 echo "       "
