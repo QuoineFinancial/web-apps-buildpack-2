@@ -112,7 +112,7 @@ echo "5/6--> Syncing to S3 ${AWS_S3_BUCKET}"
 echo "       - Syncing different-sized files..."
 
 # Download documents if exists (qryptos-prod now has documents folder)
-${BUILD_DIR}/bin/aws s3 sync s3://${AWS_S3_BUCKET}/documents ${BUILD_DIR}/dist
+${BUILD_DIR}/bin/aws s3 sync s3://${AWS_S3_BUCKET}/documents ${BUILD_DIR}/dist/documents
 
 # Sync
 ${BUILD_DIR}/bin/aws s3 sync ${BUILD_DIR}/dist/ s3://${AWS_S3_BUCKET} --delete --size-only --only-show-errors
