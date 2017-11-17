@@ -35,7 +35,7 @@ yarn install &> /dev/null || {
 }
 
 echo "       [2/2] apps..."
-apps=(core accounts home invest lend trade chart tokens)
+apps=(core accounts home invest lend trade chart tokens chat)
 length=${#apps[@]}
 
 for i in ${!apps[@]}; do
@@ -85,6 +85,13 @@ echo "       Done."
 START_TIME=$(date +%s)
 echo "       "
 echo "3/7--> Building all apps"
+
+cd ${BUILD_DIR}/_scripts/react-scripts
+yarn &> /dev/null || {
+  echo "       Failed."
+  exit 1
+}
+
 node ${BUILDPACK_DIR}/bin/utils/build.js
 END_TIME=$(date +%s)
 echo "       Done in $((END_TIME - START_TIME)) seconds."
