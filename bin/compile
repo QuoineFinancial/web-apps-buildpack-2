@@ -86,11 +86,11 @@ START_TIME=$(date +%s)
 echo "       "
 echo "3/7--> Building all apps"
 
-cd ${BUILD_DIR}/_scripts/react-scripts
-yarn &> /dev/null || {
-  echo "       Failed."
-  exit 1
-}
+# cd ${BUILD_DIR}/_scripts/react-scripts
+# yarn &> /dev/null || {
+#   echo "       Failed."
+#   exit 1
+# }
 
 node ${BUILDPACK_DIR}/bin/utils/build.js
 END_TIME=$(date +%s)
