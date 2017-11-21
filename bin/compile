@@ -35,7 +35,7 @@ yarn install &> /dev/null || {
 }
 
 echo "       [2/2] apps..."
-apps=(core accounts home invest lend trade chart tokens chat)
+apps=(core accounts home invest lend trade chart tokens)
 length=${#apps[@]}
 
 for i in ${!apps[@]}; do
