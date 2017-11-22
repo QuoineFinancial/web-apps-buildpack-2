@@ -47,6 +47,9 @@ const build = (app, callback) => {
     env: env(app)
   }, (err, stdout, stderr) => {
     if (err) {
+      console.log(err);
+      console.log('-----------------------');
+      console.log(stderr);
       console.log(`       - Build ${app} failed.`);
       callback(err);
     } else {
