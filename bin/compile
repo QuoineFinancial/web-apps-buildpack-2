@@ -43,7 +43,7 @@ for i in ${!apps[@]}; do
   ii=$((i + 1))
   echo "       - [${ii}/${length}] ${iapp}..."
   cd ${BUILD_DIR}/${iapp}
-  yarn install &> /dev/null || {
+  yarn install || {
     echo "       Failed."
     exit 1
   }
